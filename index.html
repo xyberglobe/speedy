@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><h1>Internet Speed Test</h1></title>
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #00ff3c, #0066ff, #8a00ff, #ff00ff);
+            background-size: 400% 400%;
+            animation: gradient 10s ease infinite;
+            height: 100vh;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            min-height: 500px;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* Button Styles */
+        .button {
+            font-size: 20px;
+            padding: 15px 40px;
+            background: #00ff3c;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease-in-out;
+            margin: 20px;
+            text-transform: uppercase;
+            color: white;
+        }
+
+        .button:hover {
+            background: #ff00ff;
+            transform: scale(1.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff, 0 0 80px #ff00ff, 0 0 90px #ff00ff, 0 0 100px #ff00ff; }
+            100% { box-shadow: 0 0 10px #00ff3c, 0 0 20px #00ff3c, 0 0 30px #00ff3c, 0 0 50px #00ff3c, 0 0 100px #00ff3c, 0 0 150px #00ff3c, 0 0 200px #00ff3c; }
+        }
+
+        /* Results and Loading Indicator */
+        .results {
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .ip, .location, .vpn-status {
+            font-size: 20px;
+            margin-top: 10px;
+            color: #FFD700;
+        }
+
+        .loading {
+            font-size: 22px;
+            font-weight: normal;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        /* Speedometer Styling */
+.speedometer-container {
+    margin-top: 30px; /* Added semicolon here */
+    width: 250px;
+    height: 250px;
+}
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Footer */
+        footer {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+            color: white;
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 28px;
+            }
+
+            .button {
+                font-size: 18px;
+                padding: 12px 35px;
+            }
+
+            .results {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Internet Speed Test</h1>
+        <button class="button" onclick="checkSpeed()"> Test Speed</button>
+
+        <div class="loading" id="loading"></div>
+        <div class="results" id="result"></div>
+        <div class="ip" id="ip-address"></div>
+        <div class="location" id="location"></div>
+        <div class="vpn-status" id="vpn-status"></div>
+
+        <!-- Speedometer Container -->
+        <div class="speedometer-container">
+            <canvas id="speedometer"></canvas>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; Ritesh InfoTech ,2025, All Rights Reserved</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        async function getIP() {
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            document.getElementById('ip-address').innerText = `Your IP: ${ipData.ip}`;
+            getGeoLocation(ipData.ip);  // Get Geo location based on IP
+            checkVPN(ipData.ip); // Check if VPN is used
+        }
+
+        async function getGeoLocation(ip) {
+            try {
+                const geoRes = await fetch(`https://ipinfo.io/${ip}/json?token=YOUR_VALID_API_KEY`);
+                if (!geoRes.ok) {
+                    throw new Error('Failed to fetch location data');
+                }
+                const geoData = await geoRes.json();
+                document.getElementById('location').innerText = `Location: ${geoData.city}, ${geoData.country}`;
+            } catch (error) {
+                console.error('Error fetching location data:', error);
+                getBrowserLocation(); // Fallback to browser location
+            }
+        }
+
+        function getBrowserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`)
+                            .then(response => response.json())
+                            .then(data => {
+                                document.getElementById('location').innerText = `Location: ${data.city}, ${data.countryName}`;
+                            })
+                            .catch(error => {
+                                console.error('Error fetching location data:', error);
+                                document.getElementById('location').innerText = "Location: Unknown";
+                            });
+                    },
+                    (error) => {
+                        console.error('Error getting browser location:', error);
+                        document.getElementById('location').innerText = "Location: Unknown";
+                    }
+                );
+            } else {
+                console.error('Geolocation is not supported by this browser.');
+                document.getElementById('location').innerText = "Location: Unknown";
+            }
+        }
+
+        async function checkVPN(ip) {
+            // Simulate VPN check (replace with actual VPN detection logic if available)
+            const isVPN = Math.random() < 0.5; // Randomly determine if VPN is used
+            document.getElementById('vpn-status').innerText = `VPN Status: ${isVPN ? 'Connected' : 'Not Connected'}`;
+        }
+
+        async function checkSpeed() {
+            document.getElementById('loading').innerText = "Testing... please wait!";
+            document.getElementById('result').innerHTML = "";
+            document.getElementById('location').innerHTML = "";
+            document.getElementById('vpn-status').innerHTML = "";
+            getIP();  // Get the user's IP address
+
+            try {
+                // Simulate speed test results
+                const downloadSpeed = (Math.random() * 100).toFixed(2); // Random download speed between 0 and 100 Mbps
+                const uploadSpeed = (Math.random() * 50).toFixed(2 );    // Random upload speed between 0 and 50 Mbps
+                const ping = Math.floor(Math.random() * 100);           // Random ping between 0 and 100 ms
+
+                // Simulate a delay to mimic a real speed test
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                document.getElementById('loading').innerText = "";
+
+                // Display Results
+                document.getElementById('result').innerHTML = `
+                    Download Speed: ${downloadSpeed} Mbps<br>
+                    Upload Speed: ${uploadSpeed} Mbps<br>
+                    Ping: ${ping} ms
+                `;
+
+                // Update Speedometer with Results
+                updateSpeedometer(downloadSpeed);
+
+            } catch (error) {
+                document.getElementById('loading').innerText = "";
+                document.getElementById('result').innerHTML = "Error: Could not fetch speed data.";
+                console.error('Error fetching speed data:', error);
+            }
+        }
+
+        let speedometerChart;
+        function updateSpeedometer(downloadSpeed) {
+            const maxSpeed = 100; // Maximum speed for the speedometer
+            const normalizedSpeed = Math.min(downloadSpeed, maxSpeed); // Cap speed at 100 Mbps
+
+            if (!speedometerChart) {
+                const ctx = document.getElementById('speedometer').getContext('2d');
+                speedometerChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [normalizedSpeed, maxSpeed - normalizedSpeed],
+                            backgroundColor: ['#00ff3c', '#eee'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        rotation: Math.PI * 1.5, // Start the meter from the top
+                        circumference: Math.PI * 2, // Full circle
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutoutPercentage: 85, // Hole in the center
+                        animation: {
+                            animateRotate: true,
+                            duration: 1500
+                        },
+                        tooltips: {
+                            enabled: false
+                        }
+                    }
+                });
+            } else {
+                speedometerChart.data.datasets[0].data = [normalizedSpeed, maxSpeed - normalizedSpeed];
+                speedometerChart.update();
+            }
+        }
+
+        // Initialize with IP
+        getIP();
+    </script>
+</body>
+</html>
